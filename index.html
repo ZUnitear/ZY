@@ -4632,5 +4632,361 @@
             <button class="spark-modal-close" onclick="SparkApp.closeSparkModal()">知道了</button>
         </div>
     </div>
+<script>
+// ===== 评论专属字卡组（梦角的听歌评论都从这里随机出）=====
+const commentCards = [
+    "这首歌好好听",
+    "和你一起听什么都好听",
+    "这首歌让我想起了你",
+    "歌词写的好像我们",
+    "要一直一起听歌呀",
+    "你也喜欢这首吗？",
+    "听到这首歌就想到你",
+    "今天也想和你一起听歌",
+    "旋律好温柔，就像你一样",
+    "想和你听遍所有喜欢的歌",
+    "这首歌的节奏好喜欢",
+    "安安静静和你听歌真好"
+];
+</script>
+<!-- 一起听音乐 悬浮播放器 开始 -->
+<style>
+/* 悬浮圆形按钮 */
+.music-float-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffb6c1, #ff9eb5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255,158,181,0.4);
+    z-index: 9999;
+    font-size: 22px;
+    transition: all 0.3s ease;
+}
+.music-float-btn:hover { transform: scale(1.1); }
+
+/* 播放器主面板 */
+.music-panel {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 320px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 9999;
+    display: none;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+.music-panel.show { display: block; }
+
+.music-header {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #ffb6c1, #ff9eb5);
+    color: #fff;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.music-close {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0;
+}
+
+.music-content { padding: 16px; }
+.music-song-name {
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #333;
+}
+.music-audio { width: 100%; margin-bottom: 12px; }
+
+/* 连接听歌状态 */
+.connect-status {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    padding: 6px;
+    background: #fff5f7;
+    border-radius: 8px;
+}
+.connect-btn {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #ff9eb5;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.2s;
+    font-size: 13px;
+}
+.connect-btn:hover { background: #ff8aa6; }
+.connect-btn.connected { background: #88c999; }
+
+/* 评论区 */
+.comment-section {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 12px;
+}
+.comment-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
+}
+.comment-list {
+    height: 120px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.6;
+    padding-right: 4px;
+}
+.comment-item { margin-bottom: 6px; }
+.comment-item.mine { text-align: right; color: #ff6b9d; }
+.comment-item.dream { text-align: left; color: #555; }
+
+.comment-input-bar {
+    display: flex;
+    gap: 6px;
+}
+.comment-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+}
+.comment-send {
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: #ff9eb5;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+}
+</style>
+
+<!-- 悬浮按钮 -->
+<button class="music-float-btn" id="musicFloatBtn">♪</button>
+
+<!-- 播放器面板 -->
+<div class="music-panel" id="musicPanel">
+    <div class="music-header">
+        <span>一起听音乐</span>
+        <button class="music-close" id="musicClose">×</button>
+    </div>
+    <div class="music-content">
+        <div class="music-song-name" id="songName">当前歌曲：默认音乐</div>
+        <audio class="music-audio" id="audioPlayer" controls src="music.mp3">
+
+        <div class="connect-status" id="connectStatus">未连接，点击按钮和梦角同步听歌</div>
+        <button class="connect-btn" id="connectBtn">🔗 和梦角连接听歌</button>
+
+        <div class="comment-section">
+            <div class="comment-title">听歌评论</div>
+            <div class="comment-list" id="commentList">
+                <div class="comment-item dream">连接后发评论，梦角会回复你哦～</div>
+            </div>
+            <div class="comment-input-bar">
+                <input type="text" class="comment-input" id="commentInput" placeholder="说点什么...">
+                <button class="comment-send" id="sendComment">发送</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 获取页面元素
+const floatBtn = document.getElementById('musicFloatBtn');
+const musicPanel = document.getElementById('musicPanel');
+const closeBtn = document.getElementById('musicClose');
+const audio = document.getElementById('audioPlayer');
+const connectBtn = document.getElementById('connectBtn');
+const connectStatus = document.getElementById('connectStatus');
+const commentInput = document.getElementById('commentInput');
+const sendBtn = document.getElementById('sendComment');
+const commentList = document.getElementById('commentList');
+
+let isConnected = false;
+
+// 展开/收起播放器
+floatBtn.addEventListener('click', () => {
+    musicPanel.classList.add('show');
+    floatBtn.style.display = 'none';
+});
+closeBtn.addEventListener('click', () => {
+    musicPanel.classList.remove('show');
+    floatBtn.style.display = 'block';
+});
+
+// 连接梦角同步听歌
+connectBtn.addEventListener('click', () => {
+    if(!isConnected) {
+        isConnected = true;
+        connectStatus.textContent = '✅ 正在同步播放进度...';
+        connectBtn.textContent = '已连接 · 断开';
+        connectBtn.classList.add('connected');
+        setTimeout(() => {
+            connectStatus.textContent = '✅ 已和梦角同步听歌中 ♪';
+            addDreamComment('终于和你一起听歌啦♡');
+        }, 800);
+    } else {
+        isConnected = false;
+        connectStatus.textContent = '未连接，点击按钮和梦角同步听歌';
+        connectBtn.textContent = '🔗 和梦角连接听歌';
+        connectBtn.classList.remove('connected');
+    }
+});
+
+// 添加我的评论
+function addMyComment(text) {
+    const div = document.createElement('div');
+    div.className = 'comment-item mine';
+    div.textContent = text;
+    commentList.appendChild(div);
+    commentList.scrollTop = commentList.scrollHeight;
+}
+
+// 添加梦角评论（从commentCards字卡组随机取）
+function addDreamComment(customText) {
+    const div = document.createElement('div');
+    div.className = 'comment-item dream';
+    if(customText) {
+        div.textContent = customText;
+    } else {
+        const randomIndex = Math.floor(Math.random() * commentCards.length);
+        div.textContent = commentCards[randomIndex];
+    }
+    commentList.appendChild(div);
+    commentList.scrollTop = commentList.scrollHeight;
+}
+
+// 发送评论逻辑
+function sendComment() {
+    const text = commentInput.value.trim();
+    if(!text) return;
+    addMyComment(text);
+    commentInput.value = '';
+    
+    // 只有连接状态下，梦角才会回复
+    if(isConnected) {
+        // 随机延迟1-2秒，模拟真实感
+        const delay = 1000 + Math.random() * 1500;
+        setTimeout(() => {
+            addDreamComment();
+        }, delay);
+    }
+}
+
+sendBtn.addEventListener('click', sendComment);
+commentInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') sendComment();
+});
+</script>
+<!-- 一起听音乐 悬浮播放器 结束 -->
+<!-- 朋友圈增强功能 开始 -->
+<script>
+// ===== 梦角朋友圈内容字库（可以自己加句子）=====
+const dreamMoments = [
+    "今天天气很好，想和你一起出门。",
+    "刚看到一朵很像你的云。",
+    "今天也很想你。",
+    "分享一首好听的歌给你。",
+    "今天吃到了很好吃的甜品，下次带你一起去。",
+    "晚风很温柔，就像你一样。",
+    "今天的晚霞超美，拍给你看。",
+    "要早点休息，别熬夜呀。",
+    "今天也有在好好生活，因为想见你。"
+];
+
+// 页面加载完成后启动功能
+window.onload = function() {
+    // 给已有动态添加点赞功能
+    addLikeFeature();
+    
+    // 打开页面5秒后，梦角发第一条动态
+    setTimeout(() => {
+        sendDreamMoment();
+    }, 5000);
+    
+    // 之后每隔20-40秒随机发一条
+    setInterval(() => {
+        sendDreamMoment();
+    }, 20000 + Math.random() * 20000);
+};
+
+// 添加点赞按钮和点赞数
+function addLikeFeature() {
+    // 匹配页面里的动态卡片
+    const moments = document.querySelectorAll('.moment-card, .post, .feed-item, [class*="moment"]');
+    moments.forEach(item => {
+        if(item.querySelector('.like-btn')) return;
+        
+        const likeBar = document.createElement('div');
+        likeBar.style.cssText = 'margin-top:8px; font-size:12px; color:#666;';
+        likeBar.innerHTML = `<button class="like-btn" style="background:none;border:none;color:#ff6b9d;cursor:pointer;padding:0;">♡ 点赞</button> <span class="like-count">0</span>`;
+        item.appendChild(likeBar);
+        
+        const btn = likeBar.querySelector('.like-btn');
+        const count = likeBar.querySelector('.like-count');
+        let liked = false;
+        btn.addEventListener('click', () => {
+            if(!liked) {
+                liked = true;
+                btn.textContent = '❤️ 已赞';
+                count.textContent = parseInt(count.textContent) + 1;
+                // 模拟梦角延迟点赞
+                setTimeout(() => {
+                    count.textContent = parseInt(count.textContent) + 1;
+                }, 1000 + Math.random() * 1000);
+            }
+        });
+    });
+}
+
+// 梦角发布一条新动态
+function sendDreamMoment() {
+    // 匹配动态列表容器
+    const momentList = document.querySelector('.moments-list, .feed-list, .post-list, [class*="moments"]');
+    if(!momentList) return;
+    
+    const randomText = dreamMoments[Math.floor(Math.random() * dreamMoments.length)];
+    const time = new Date().toLocaleDateString() + ' ' + new Date().getHours() + ':' + String(new Date().getMinutes()).padStart(2,'0');
+    
+    const newPost = document.createElement('div');
+    newPost.className = 'moment-card dream-moment';
+    newPost.style.cssText = 'padding:12px; border-bottom:1px solid #f0f0f0; margin-bottom:10px;';
+    newPost.innerHTML = `
+        <div style="font-weight:500; color:#333; margin-bottom:4px;">梦角</div>
+        <div style="font-size:13px; color:#333; margin-bottom:6px;">${randomText}</div>
+        <div style="font-size:11px; color:#999;">${time}</div>
+        <div style="margin-top:8px; font-size:12px; color:#666;">
+            <span>❤️ <span class="like-count">1</span></span>
+        </div>
+    `;
+    
+    // 插入到列表最顶部
+    momentList.insertBefore(newPost, momentList.firstChild);
+}
+</script>
+<!-- 朋友圈增强功能 结束 -->
 </body>
 </html>
