@@ -637,6 +637,7 @@ window.openMyStickerSettings = function() {
 const _BACKUP_PREFIX = 'BACKUP_V1_';
 function _backupCriticalData() {
     if (window._skipBackup) return;
+    if (!SESSION_ID) return;
     try {
         const backupPayload = {
             ts: Date.now(),
@@ -664,21 +665,28 @@ function _backupCriticalData() {
                 _truncated: true
             };
             const smallerJson = JSON.stringify(smallerPayload);
-            localStorage.setItem(_BACKUP_PREFIX + 'critical', smallerJson);
+            localStorage.setItem(_BACKUP_PREFIX + SESSION_ID + '_critical', smallerJson);
         } else {
-            localStorage.setItem(_BACKUP_PREFIX + 'critical', json);
+            localStorage.setItem(_BACKUP_PREFIX + SESSION_ID + '_critical', json);
         }
-        localStorage.setItem(_BACKUP_PREFIX + 'timestamp', String(Date.now()));
+        localStorage.setItem(_BACKUP_PREFIX + SESSION_ID + '_timestamp', String(Date.now()));
     } catch (e) {
         console.warn('localStorage 备份写入失败（可能存储已满）:', e);
     }
 }
 
 function _tryRecoverFromBackup() {
+    if (!SESSION_ID) return null;
     try {
-        const raw = localStorage.getItem(_BACKUP_PREFIX + 'critical');
+        const raw = localStorage.getItem(_BACKUP_PREFIX + SESSION_ID + '_critical');
         if (!raw) return null;
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        // 仅在 sessionId 匹配时返回备份，防止跨会话污染
+        if (parsed && parsed.sessionId && String(parsed.sessionId) !== String(SESSION_ID)) {
+            console.warn('[_tryRecoverFromBackup] 备份 sessionId 不匹配当前会话，忽略');
+            return null;
+        }
+        return parsed;
     } catch (e) {
         return null;
     }
