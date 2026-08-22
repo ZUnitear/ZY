@@ -39,6 +39,10 @@
       if (saved) {
         const parsed = JSON.parse(saved);
         streakData = { ...streakData, ...parsed };
+        // 兼容性修复：旧数据中 maxStreak 可能未正确同步
+        if (streakData.isActive && streakData.currentStreak > streakData.maxStreak) {
+          streakData.maxStreak = streakData.currentStreak;
+        }
       }
     } catch(e) {}
   }
@@ -61,41 +65,54 @@
     if (streakData.lastChatDate === today) return;
 
     const diff = streakData.lastChatDate ? getDateDiff(streakData.lastChatDate, today) : 999;
+    const hasEverHadSpark = streakData.maxStreak >= STREAK_THRESHOLD;
 
     if (diff === 1) {
       // 连续聊天
-      streakData.currentStreak++;
-      streakData.rekindleProgress++;
-
-      // 检查是否达到出现火花条件
-      if (!streakData.isActive && streakData.currentStreak >= STREAK_THRESHOLD) {
-        streakData.isActive = true;
-        streakData.rekindleProgress = 0;
-        showSparkNotification('🔥 火花出现！已连续聊天 ' + streakData.currentStreak + ' 天');
-      }
-      // 检查是否重燃成功
-      else if (!streakData.isActive && streakData.rekindleProgress >= REKINDLE_THRESHOLD) {
-        streakData.isActive = true;
-        streakData.currentStreak = streakData.rekindleProgress;
-        streakData.rekindleCount++;
-        streakData.rekindleProgress = 0;
-        showSparkNotification('🔥 火花重燃！连续聊天 ' + streakData.currentStreak + ' 天');
-      }
-      // 火花继续燃烧
-      else if (streakData.isActive) {
+      if (streakData.isActive) {
+        // 火花继续燃烧
+        streakData.currentStreak++;
         if (streakData.currentStreak > streakData.maxStreak) {
           streakData.maxStreak = streakData.currentStreak;
         }
+      } else if (hasEverHadSpark) {
+        // 曾经有过火花，现在是重燃进度中
+        streakData.currentStreak++;
+        streakData.rekindleProgress++;
+        if (streakData.rekindleProgress >= REKINDLE_THRESHOLD) {
+          // 重燃成功
+          streakData.isActive = true;
+          streakData.rekindleCount++;
+          streakData.rekindleProgress = 0;
+          if (streakData.currentStreak > streakData.maxStreak) {
+            streakData.maxStreak = streakData.currentStreak;
+          }
+          showSparkNotification('🔥 火花重燃！连续聊天 ' + streakData.currentStreak + ' 天');
+        }
+      } else {
+        // 从未有过火花，首次积累中
+        streakData.currentStreak++;
+        if (streakData.currentStreak >= STREAK_THRESHOLD) {
+          streakData.isActive = true;
+          streakData.maxStreak = streakData.currentStreak;
+          streakData.rekindleProgress = 0;
+          showSparkNotification('🔥 火花出现！已连续聊天 ' + streakData.currentStreak + ' 天');
+        }
       }
     } else if (diff > 1) {
-      // 断聊了，火花熄灭
+      // 断聊了
       if (streakData.isActive) {
         streakData.isActive = false;
         streakData.rekindleProgress = 0;
         showSparkNotification('💨 火花已熄灭，连续聊天可重燃');
       }
+      // 重置为第一天
       streakData.currentStreak = 1;
-      streakData.rekindleProgress = 1;
+      if (hasEverHadSpark) {
+        streakData.rekindleProgress = 1;
+      } else {
+        streakData.rekindleProgress = 0;
+      }
     } else {
       // diff <= 0 同一天或异常，不处理
       return;
