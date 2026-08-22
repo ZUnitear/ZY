@@ -138,6 +138,7 @@
         chat: '<i class="fas fa-comment-alt"></i>',
         mailbox: '<i class="fas fa-envelope"></i>',
         moyu: '<i class="fas fa-fish"></i>',
+        'call-records': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
         diary: '<i class="fas fa-clipboard-list"></i>',
         fortune: '<i class="fas fa-star-and-crescent"></i>',
         mood: '<i class="fas fa-calendar-day"></i>',
@@ -147,7 +148,7 @@
         accounting: '<i class="fas fa-coins"></i>'
     };
 
-    const defaultAppOrder = ['chat', 'mailbox', 'moyu', 'diary', 'fortune', 'mood', 'calendar', 'decide', 'stats', 'accounting', 'map'];
+    const defaultAppOrder = ['chat', 'mailbox', 'moyu', 'call-records', 'diary', 'fortune', 'mood', 'calendar', 'decide', 'stats', 'accounting', 'map'];
     let appOrder = [...defaultAppOrder];
     let isEditMode = false;
 
@@ -1170,7 +1171,7 @@
         if (!grid) return;
 
         grid.innerHTML = '';
-        const nameMap = { chat:'聊天', mailbox:'信封', moyu:'摸鱼', diary:'朝夕心记', fortune:'运势', mood:'心晴', calendar:'日历', decide:'抉择', stats:'统计', accounting:'记账' };
+        const nameMap = { chat:'聊天', mailbox:'信封', moyu:'摸鱼', 'call-records':'通讯', diary:'朝夕心记', fortune:'运势', mood:'心晴', calendar:'日历', decide:'抉择', stats:'统计', accounting:'记账' };
 
         Object.keys(defaultAppIcons).forEach(app => {
             const item = document.createElement('div');
@@ -1527,8 +1528,15 @@
                     if (typeof window.renderMoyuCurrent === 'function') window.renderMoyuCurrent();
                     if (typeof window.renderMoyuRecords === 'function') window.renderMoyuRecords();
                     if (typeof window.renderMoyuLocations === 'function') window.renderMoyuLocations();
-                    if (typeof window.updateMoyuLocationSelect === 'function') window.updateMoyuLocationSelect();
                     if (typeof window.switchMoyuTab === 'function') window.switchMoyuTab('current');
+                }
+            },
+            'call-records': () => {
+                if (typeof window.CallRecords !== 'undefined' && typeof window.CallRecords.openCallRecordsModal === 'function') {
+                    window.CallRecords.openCallRecordsModal();
+                } else {
+                    const modal = document.getElementById('call-records-modal');
+                    if (modal) homeShowModal(modal);
                 }
             },
             'diary': () => {
