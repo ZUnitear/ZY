@@ -2575,7 +2575,7 @@ function _showImportUI(data) {
 
 function _showIOSheet(title, subtitle, modules, icon, onConfirm, showMode = false) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease;';
 
     let modeVal = 'merge';
 
@@ -2686,7 +2686,7 @@ function _showIOSheet(title, subtitle, modules, icon, onConfirm, showMode = fals
 
 function _makeOverlay() {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
     return overlay;
 }
 
