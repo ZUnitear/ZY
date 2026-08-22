@@ -2694,6 +2694,43 @@
   padding: 2px 6px;
 }
 
+.moments-container .beautify-friend-item .friend-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.moments-container .beautify-friend-item .friend-edit-btn,
+.moments-container .beautify-friend-item .friend-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.moments-container .beautify-friend-item .friend-edit-btn {
+  color: #576b95;
+}
+
+.moments-container .beautify-friend-item .friend-edit-btn:hover {
+  background: rgba(87, 107, 149, 0.1);
+}
+
+.moments-container .beautify-friend-item .friend-remove-btn {
+  color: #ff6b6b;
+}
+
+.moments-container .beautify-friend-item .friend-remove-btn:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
 .moments-container .beautify-friends-add {
   display: flex;
   gap: 8px;
@@ -3721,6 +3758,22 @@
 .moments-container.dark-mode .beautify-friend-item .friend-tag {
   color: #8a9dc8;
   background: rgba(138, 157, 200, 0.15);
+}
+
+.moments-container.dark-mode .beautify-friend-item .friend-edit-btn {
+  color: #8a9dc8;
+}
+
+.moments-container.dark-mode .beautify-friend-item .friend-edit-btn:hover {
+  background: rgba(138, 157, 200, 0.15);
+}
+
+.moments-container.dark-mode .beautify-friend-item .friend-remove-btn {
+  color: #ff8a8a;
+}
+
+.moments-container.dark-mode .beautify-friend-item .friend-remove-btn:hover {
+  background: rgba(255, 138, 138, 0.15);
 }
 
 .moments-container.dark-mode .beautify-friends-add input {
