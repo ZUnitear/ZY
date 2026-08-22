@@ -27,28 +27,6 @@ window.initMoyu = function () {
             }
         });
     }
-
-    // 绑定编辑器关闭按钮
-    const closeEditorBtn = document.getElementById('close-moyu-editor');
-    if (closeEditorBtn) {
-        closeEditorBtn.addEventListener('click', function () {
-            window.closeMoyuEditor();
-        });
-    }
-
-    // 绑定保存按钮
-    const saveBtn = document.getElementById('save-moyu-btn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function () {
-            window.saveMoyuRecord();
-        });
-    }
-
-    // 设置默认日期为今天
-    const dateInput = document.getElementById('moyu-date-input');
-    if (dateInput) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-    }
 };
 
 // ==================== 弹窗管理 ====================
@@ -74,7 +52,6 @@ window.openMoyuModal = function () {
     window.renderMoyuCurrent();
     window.renderMoyuRecords();
     window.renderMoyuLocations();
-    window.updateMoyuLocationSelect();
 
     // 默认显示当前标签页
     window.switchMoyuTab('current');
@@ -122,13 +99,13 @@ window.renderMoyuCurrent = function () {
                 <i class="fas fa-fish" style="font-size: 36px; margin-bottom: 12px; opacity: 0.3;"></i>
                 <div style="font-size: 13px;">暂无摸鱼记录</div>
                 <div style="font-size: 11px; margin-top: 8px; opacity: 0.7; line-height: 1.6;">
-                    系统会根据设置的间隔时间<br>
-                    自动随机生成摸鱼记录
+                    梦角会在此生成<br>
+                    记录生活的摸鱼记录
                 </div>
                 <div style="margin-top: 16px; padding: 12px; background: rgba(var(--accent-color-rgb), 0.08); border-radius: 10px; border: 1px dashed rgba(var(--accent-color-rgb), 0.3);">
                     <div style="font-size: 11px; color: var(--text-secondary);">
                         <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
-                        请在「设置」→「摸鱼记录」中<br>开启并配置自动生成
+                        请在「设置」→「摸鱼记录」中<br>添加字卡并等待梦角记录
                     </div>
                 </div>
             </div>
@@ -527,125 +504,6 @@ window.renderMoyuLocations = function () {
     `).join('');
 };
 
-// ==================== 更新地点选择下拉框 ====================
-window.updateMoyuLocationSelect = function () {
-    const select = document.getElementById('moyu-location-select');
-    if (!select) return;
-
-    const locations = moyuLocations || [];
-    const currentValue = select.value;
-
-    select.innerHTML = '<option value="">请选择地点...</option>' +
-        locations.map(loc => `<option value="${window.escapeHtml(loc)}">${window.escapeHtml(loc)}</option>`).join('');
-
-    // 恢复之前的选择
-    if (currentValue && locations.includes(currentValue)) {
-        select.value = currentValue;
-    }
-};
-
-// ==================== 编辑器管理 ====================
-window.openMoyuEditor = function () {
-    const editor = document.getElementById('moyu-editor-slide');
-    if (!editor) return;
-
-    // 重置表单
-    document.getElementById('moyu-location-select').value = '';
-    document.getElementById('moyu-date-input').value = new Date().toISOString().split('T')[0];
-    document.getElementById('moyu-hours-input').value = '';
-
-    // 更新地点选项
-    window.updateMoyuLocationSelect();
-
-    // 显示编辑器
-    editor.style.transform = 'translateX(0)';
-};
-
-window.closeMoyuEditor = function () {
-    const editor = document.getElementById('moyu-editor-slide');
-    if (editor) {
-        editor.style.transform = 'translateX(100%)';
-    }
-};
-
-// ==================== 随机获取摸鱼内容 ====================
-function getRandomMoyuNote() {
-    // 从摸鱼活动库中随机获取（由摸鱼管理功能维护）
-    const activities = window.moyuActivities || [];
-    if (activities.length > 0) {
-        return activities[Math.floor(Math.random() * activities.length)];
-    }
-    
-    // 如果没有摸鱼活动库，使用默认内容
-    const defaultNotes = [
-        '刷了一会儿社交媒体',
-        '看了会儿视频',
-        '喝了杯咖啡休息一下',
-        '和同事聊了会儿天',
-        '翻了翻邮件',
-        '整理了一下桌面',
-        '眯了一会儿',
-        '刷了会儿新闻',
-        '发了会儿呆',
-        '整理文件'
-    ];
-    return defaultNotes[Math.floor(Math.random() * defaultNotes.length)];
-}
-
-// ==================== 保存记录 ====================
-window.saveMoyuRecord = function () {
-    const location = document.getElementById('moyu-location-select').value.trim();
-    const date = document.getElementById('moyu-date-input').value;
-    const hours = parseFloat(document.getElementById('moyu-hours-input').value);
-
-    // 验证
-    if (!location) {
-        if (typeof showNotification === 'function') showNotification('请选择工作地点', 'error');
-        else alert('请选择工作地点');
-        return;
-    }
-    if (!date) {
-        if (typeof showNotification === 'function') showNotification('请选择日期', 'error');
-        else alert('请选择日期');
-        return;
-    }
-    if (!hours || hours <= 0) {
-        if (typeof showNotification === 'function') showNotification('请输入有效的工作时长', 'error');
-        else alert('请输入有效的工作时长');
-        return;
-    }
-
-    // 从摸鱼活动库随机抽取一条作为摸鱼内容
-    const note = getRandomMoyuNote();
-
-    // 创建记录
-    const record = {
-        id: Date.now(),
-        location: location,
-        date: date,
-        hours: hours,
-        note: note,
-        createdAt: new Date().toISOString()
-    };
-
-    // 添加到记录数组
-    if (!moyuRecords) moyuRecords = [];
-    moyuRecords.push(record);
-
-    // 保存数据
-    if (typeof throttledSaveData === 'function') throttledSaveData();
-
-    // 关闭编辑器
-    window.closeMoyuEditor();
-
-    // 刷新显示
-    window.renderMoyuStats();
-    window.renderMoyuRecords();
-
-    // 显示成功提示
-    if (typeof showNotification === 'function') showNotification('摸鱼记录已保存~', 'success');
-};
-
 // ==================== 删除记录 ====================
 window.deleteMoyuRecord = function (index) {
     if (!confirm('确定要删除这条记录吗？')) return;
@@ -687,7 +545,6 @@ window.addMoyuLocation = function () {
     // 刷新显示
     window.renderMoyuStats();
     window.renderMoyuLocations();
-    window.updateMoyuLocationSelect();
 
     if (typeof showNotification === 'function') showNotification('地点添加成功', 'success');
 };
@@ -700,7 +557,6 @@ window.removeMoyuLocation = function (index) {
         if (typeof throttledSaveData === 'function') throttledSaveData();
         window.renderMoyuStats();
         window.renderMoyuLocations();
-        window.updateMoyuLocationSelect();
         if (typeof showNotification === 'function') showNotification('地点已删除', 'success');
     }
 };
