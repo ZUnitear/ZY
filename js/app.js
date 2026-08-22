@@ -39,11 +39,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
+            // 尝试按 SESSION_ID 查找会话专属备份（此时 SESSION_ID 可能尚未初始化，故尝试旧格式）
             const emergencyBackupRaw = localStorage.getItem('BACKUP_V1_critical');
             if (emergencyBackupRaw) {
                 const emergencyBackup = JSON.parse(emergencyBackupRaw);
                 if (emergencyBackup && Array.isArray(emergencyBackup.messages) && emergencyBackup.messages.length > 0) {
-                    console.warn('[boot] 检测到紧急备份，可用于异常恢复');
+                    console.warn('[boot] 检测到旧格式紧急备份（不含会话ID），后续 loadData 将按需处理');
                 }
             }
         } catch (e) {
@@ -102,18 +103,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const backup = typeof _tryRecoverFromBackup === 'function' ? _tryRecoverFromBackup() : null;
                     if (backup && Array.isArray(backup.messages) && backup.messages.length > 0 && Array.isArray(messages) && backup.messages.length > messages.length) {
-                        console.warn('[visibilitychange] 检测到备份消息比当前更多，自动尝试恢复');
-                        try {
-                            messages = backup.messages.map(m => ({
-                                ...m,
-                                timestamp: new Date(m.timestamp)
-                            }));
-                            if (backup.settings) Object.assign(settings, backup.settings);
-                            if (typeof updateUI === 'function') updateUI();
-                            if (typeof throttledSaveData === 'function') throttledSaveData();
-                            showNotification('已自动恢复本地临时备份内容', 'warning', 3500);
-                        } catch (restoreErr) {
-                            console.warn('[visibilitychange] 自动恢复失败，保留当前页面内容:', restoreErr);
+                        // 校验备份是否属于当前会话，防止跨会话污染
+                        if (backup.sessionId && String(backup.sessionId) !== String(SESSION_ID)) {
+                            console.warn('[visibilitychange] 备份属于其他会话 (' + backup.sessionId + ')，跳过恢复');
+                        } else {
+                            console.warn('[visibilitychange] 检测到备份消息比当前更多，自动尝试恢复');
+                            try {
+                                messages = backup.messages.map(m => ({
+                                    ...m,
+                                    timestamp: new Date(m.timestamp)
+                                }));
+                                if (backup.settings) Object.assign(settings, backup.settings);
+                                if (typeof updateUI === 'function') updateUI();
+                                if (typeof throttledSaveData === 'function') throttledSaveData();
+                                showNotification('已自动恢复本地临时备份内容', 'warning', 3500);
+                            } catch (restoreErr) {
+                                console.warn('[visibilitychange] 自动恢复失败，保留当前页面内容:', restoreErr);
+                            }
                         }
                     }
                 } catch (e) {
