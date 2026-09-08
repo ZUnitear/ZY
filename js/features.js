@@ -186,7 +186,7 @@
 
 (function() {
     var KEY = 'keepaliveAudioEnabled';
-    var SRC = 'https://img.heliar.top/file/1772885159972_silence.m4a';
+    var SRC = 'https://files.catbox.moe/xmzewt.m4a';
     var _audio = null;
     var _unlockBound = false;
 
